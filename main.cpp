@@ -33,10 +33,12 @@ int main(int argc, char **argv)
     int ncol;
 
     /* 引数チェック */
-    if (argc < 2) exit(-1);
+    if (argc < 2)
+        exit(-1);
 
     /* ファイルオープン */
-    if ((fp = fopen(argv[1], "rb")) == NULL) exit(-1);
+    if ((fp = fopen(argv[1], "rb")) == NULL)
+        exit(-1);
 
     /* ヘッダ読み込み */
     read_header_MNISTimage(fp, &nimg, &nrow, &ncol);

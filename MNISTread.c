@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "fileread.h"
+#include "MNISTread.h"
 
 typedef union {
     int l;
@@ -36,9 +36,9 @@ void read_header_MNISTimage(FILE *fp, int *nimg, int *nrow, int *ncol){
     *nrow = readInt_SwapEndian(fp);
     *ncol = readInt_SwapEndian(fp);
     fprintf(stderr, "CHECK: magic = %08x (%d)\n", magic_data, magic_data);
-    fprintf(stderr, "CHECK: nimg  = %08x (%d)\n", *nimg);
-    fprintf(stderr, "CHECK: nrow  = %08x (%d)\n", *nrow);
-    fprintf(stderr, "CHECK: ncol  = %08x (%d)\n", *ncol);
+    fprintf(stderr, "CHECK: nimg  = %08x (%d)\n", *nimg, *nimg);
+    fprintf(stderr, "CHECK: nrow  = %08x (%d)\n", *nrow, *nrow);
+    fprintf(stderr, "CHECK: ncol  = %08x (%d)\n", *ncol, *ncol);
 }
 
 double read_grayscale_pixel(FILE *fp){

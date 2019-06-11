@@ -1,5 +1,5 @@
-#ifndef __FILEREAD_H__
-#define __FILEREAD_H__
+#ifndef __MNIST_READ_H__
+#define __MNIST_READ_H__
 
 #include <stdio.h>
 void read_header_MNISTimage(FILE *fp, int *nimg, int *nrow, int *ncol);

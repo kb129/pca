@@ -6,11 +6,23 @@
 
 extern "C"
 {
-    #include "MNISTread.h"
+#include "MNISTread.h"
 }
 
 using namespace std;
 using namespace Eigen;
+
+int need_num_of_contrib_ratio(vector<double> v, double v_total, double r, int ndim)
+{
+    int m = 0; // 累積寄与率rを満たすために必要な固有値の個数
+    double sum = 0;
+
+    while (sum < r * v_total)
+    {
+        sum += v[m++];
+    }
+    return m;
+}
 
 int main(int argc, char **argv)
 {
@@ -21,15 +33,12 @@ int main(int argc, char **argv)
     int ncol;
 
     /* 引数チェック */
-    if (argc < 2)
-        exit(-1);
+    if (argc < 2) exit(-1);
 
     /* ファイルオープン */
-    if ((fp = fopen(argv[1], "r")) == NULL)
-    {
-        exit(-1);
-    }
+    if ((fp = fopen(argv[1], "rb")) == NULL) exit(-1);
 
+    /* ヘッダ読み込み */
     read_header_MNISTimage(fp, &nimg, &nrow, &ncol);
     ndim = nrow * ncol;
 
@@ -37,7 +46,7 @@ int main(int argc, char **argv)
     MatrixXd img_matrix(nimg, ndim); // 画像データを格納する配列
 
     /* 画像読み込み */
-    cout << "Read images..." << endl;
+    cerr << "Read images..." << endl;
     for (int i = 0; i < nimg; i++)
     {
         for (int j = 0; j < ndim; j++)
@@ -51,86 +60,61 @@ int main(int argc, char **argv)
             }
         }
     }
-    cout << "Done." << endl;
-    
+
     /* 平均ベクトルを求める */
     VectorXd v_mean(ndim); // 平均ベクトル
-    for(int i=0; i<ndim; i++){
+    for (int i = 0; i < ndim; i++)
+    {
         int sum = 0;
-        for(int j=0; j<nimg; j++){
+        for (int j = 0; j < nimg; j++)
+        {
             sum += img_matrix(j, i);
         }
-        v_mean(i);
+        v_mean(i) = sum;
     }
 
     /* データ行列から平均ベクトルを引く */
     MatrixXd img_matrix_bar(nimg, ndim);
-    for(int i=0; i<nimg; i++){
-        for(int j=0; j<ndim; j++){
-            img_matrix_bar(i, j) = img_matrix(i, j) - v_mean(j);
+    for (int i = 0; i < nimg; i++)
+    {
+        for (int j = 0; j < ndim; j++)
+        {
+            img_matrix_bar(i, j) = (double)img_matrix(i, j) - (double)v_mean(0);
         }
     }
-    
+
     /* 共分散行列を求める */
-    MatrixXd sigma(ndim, ndim);
-    sigma = img_matrix_bar.transpose() * img_matrix_bar / (double)nimg;
-    
+    MatrixXd sigma = img_matrix_bar.transpose() * img_matrix_bar / (double)nimg;
 
     /* 固有値を求める */
     SelfAdjointEigenSolver<MatrixXd> eigensolver(sigma);
     VectorXd values(ndim);
-    if(eigensolver.info()!=Success) abort();
+    if (eigensolver.info() != Success)
+        abort();
     values = eigensolver.eigenvalues();
-    cout << values << endl;
-
 
     /* 固有値をソート */
-    vector<double> vec;
-    for(int i=0; i<ndim; i++){
-        vec.push_back(values(i));
+    vector<double> val;
+    for (int i = 0; i < ndim; i++)
+    {
+        val.push_back((double)values(i));
     }
-    sort(begin(vec), end(vec), greater<double>());
-
-    for(int i=0; i<ndim; i++){
-        //fprintf(stderr, "%e\n", vec[i]);
-    }
+    sort(begin(val), end(val), greater<double>());
 
     /* 全分散量を計算 */
-    double v = 0;
-    for(int i=0; i<ndim; i++){
-        v += vec[i];
+    double v_total = 0;
+    for (int i = 0; i < ndim; i++)
+    {
+        v_total += val[i];
     }
 
     /* 累積寄与率を設定 */
-    double r;
-    int m; // 累積寄与率rを満たすために必要な固有値の個数
-    scanf("%d", &r);
-    double sum = 0;
-    while(sum < r){
-
-        sum += vec[m];
-        m++;
+    int n;
+    for (int i = 0; i < 1000; i++)
+    {
+        n = need_num_of_contrib_ratio(val, v_total, i / 1000.0, ndim);
+        cout << n << " " << i / 1000.0 << endl;
     }
 
-
-
     return 0;
 }
-#if 0 
-int main(void){
-    MatrixXd A(2, 2);
-    A << 1, 4, 1, 3;
-
-    cout << "Here is the matrix A: \n" << A << endl;
-
-    SelfAdjointEigenSolver<MatrixXd> eigensolver(A);
-    if(eigensolver.info() != Success) abort();
-    cout << "The eigenvalues of A are:\n" << eigensolver.eigenvalues() << endl;
-    cout << "Here is a matrix whose columns are eigenvectors of A\n"
-        << "coresponding to these eigenvalues:\n"
-        << eigensolver.eigenvectors() << endl;
-
-    return 0;
-}
-
-#endif
